@@ -1,5 +1,6 @@
-#include <vector>
+#include "CFile.h"
 #include <string>
+#include <vector>
 
 class CDirectory
 {
@@ -13,11 +14,11 @@ public:
     size_t TotalFiles(bool recurse = false);
     size_t TotalFolders(bool recurse = false);
 
-    std::vector<std::wstring> const &Files();
+    std::vector<CFile *> const Files();
     std::vector<std::wstring> const &Folders();
 
 private:
-    std::vector<std::wstring> files;
+    std::vector<CFile *> files;
     std::vector<std::wstring> folders;
     std::vector<CDirectory *> children;
 

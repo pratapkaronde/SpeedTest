@@ -12,6 +12,13 @@ CDirectory::CDirectory(wstring path) : bIsDirectoryRead(false)
 
 CDirectory::~CDirectory()
 {
+    while (!files.empty())
+    {
+        auto *pFile = files.back();
+        delete pFile;
+        files.pop_back();
+    }
+
     while (!children.empty())
     {
         auto child = children.back();
@@ -20,7 +27,7 @@ CDirectory::~CDirectory()
     }
 }
 
-std::vector<std::wstring> const &CDirectory::Files()
+std::vector<CFile *> const CDirectory::Files()
 {
     if (!bIsDirectoryRead)
         ReadDirectory();
@@ -95,8 +102,14 @@ bool CDirectory::ReadDirectory(bool recurse, unsigned depth)
             }
             else
             {
-                //cout << "      ";
-                files.push_back(name);
+
+                ULONGLONG fileSize = (static_cast<ULONGLONG>(findData.nFileSizeHigh) << static_cast<size_t>(sizeof(findData.nFileSizeLow) * 8)) |
+                                     findData.nFileSizeLow;
+
+                //size_t fileSize = (static_cast<size_t>(findData.nFileSizeHigh) << sizeof(findData.nFileSizeHigh) * 8) + findData.nFileSizeLow;
+
+                CFile *pNewFile = new CFile(name, fileSize);
+                files.push_back(pNewFile);
             }
 
             //wcout << name << endl;
@@ -133,7 +146,7 @@ void CDirectory::List(bool recurse, unsigned depth)
             wcout << "<DIR> " << *folder << endl;
 
         for (auto file = files.begin(); file != files.end(); ++file)
-            wcout << "      " << *file << endl;
+            wcout << "      " << (*file)->FileName() << endl;
     }
     catch (...)
     {
