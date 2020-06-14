@@ -5,11 +5,20 @@
 
 using namespace std;
 
+/**
+ * @brief Construct a new CDirectory::CDirectory object
+ * 
+ * @param path --> Path of the directory object
+ */
 CDirectory::CDirectory(wstring path) : bIsDirectoryRead(false)
 {
     mpPath = path;
 }
 
+/**
+ * @brief Destroy the CDirectory::CDirectory object
+ * 
+ */
 CDirectory::~CDirectory()
 {
     while (!files.empty())
@@ -27,6 +36,11 @@ CDirectory::~CDirectory()
     }
 }
 
+/**
+ * @brief Access the list of files in this directory 
+ * 
+ * @return std::vector<CFile *> const --> Returns a vector of pointers to all CFile Objects 
+ */
 std::vector<CFile *> const CDirectory::Files()
 {
     if (!bIsDirectoryRead)
@@ -35,6 +49,11 @@ std::vector<CFile *> const CDirectory::Files()
     return files;
 }
 
+/**
+ * @brief Access the list of sub-folders in this directory 
+ * 
+ * @return std::vector<std::wstring> const& --> Returns a vector of all folder names 
+ */
 std::vector<std::wstring> const &CDirectory::Folders()
 {
     if (!bIsDirectoryRead)
@@ -43,6 +62,12 @@ std::vector<std::wstring> const &CDirectory::Folders()
     return folders;
 }
 
+/**
+ * @brief Get count of files in this directory 
+ * 
+ * @param recurse --> If true, Include files in the sub-folders 
+ * @return size_t --> Returns the count of files 
+ */
 size_t CDirectory::TotalFiles(bool recurse)
 {
     if (!bIsDirectoryRead)
@@ -57,6 +82,12 @@ size_t CDirectory::TotalFiles(bool recurse)
     return total_files;
 }
 
+/**
+ * @brief Get count of sub-folders in this directory 
+ * 
+ * @param recurse --> If true, count folders inside the sub-folders
+ * @return size_t --> Count of sub-folders 
+ */
 size_t CDirectory::TotalFolders(bool recurse)
 {
     if (!bIsDirectoryRead)
@@ -71,6 +102,14 @@ size_t CDirectory::TotalFolders(bool recurse)
     return total_folders;
 }
 
+/**
+ * @brief Scan the directory to discover files and sub-folders 
+ * 
+ * @param recurse --> If true, scan sub-folders
+ * @param depth --> If recurse set to true, limit scan to specified depth. By default scans till the very end 
+ * @return true --> If scan succeded
+ * @return false --> If scan failed 
+ */
 bool CDirectory::ReadDirectory(bool recurse, unsigned depth)
 {
     wstring searchPath = mpPath;
@@ -94,7 +133,6 @@ bool CDirectory::ReadDirectory(bool recurse, unsigned depth)
             wstring name(findData.cFileName);
             if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             {
-                //cout << "<DIR> ";
                 if (!name.compare(L".") || !name.compare(L".."))
                     continue;
 
@@ -106,19 +144,18 @@ bool CDirectory::ReadDirectory(bool recurse, unsigned depth)
                 ULONGLONG fileSize = (static_cast<ULONGLONG>(findData.nFileSizeHigh) << static_cast<size_t>(sizeof(findData.nFileSizeLow) * 8)) |
                                      findData.nFileSizeLow;
 
-                //size_t fileSize = (static_cast<size_t>(findData.nFileSizeHigh) << sizeof(findData.nFileSizeHigh) * 8) + findData.nFileSizeLow;
-
                 CFile *pNewFile = new CFile(name, fileSize);
                 files.push_back(pNewFile);
             }
-
-            //wcout << name << endl;
 
         } while (FindNextFileW(hFind, &findData) != 0);
         bIsDirectoryRead = true;
     }
     FindClose(hFind);
 
+    /**
+     * @brief Scan sub-folders if recurse set to true 
+     */
     if (recurse)
         for (auto folder = folders.begin(); folder != folders.end(); ++folder)
         {
@@ -131,6 +168,12 @@ bool CDirectory::ReadDirectory(bool recurse, unsigned depth)
     return bIsDirectoryRead;
 }
 
+/**
+ * @brief Display the list of files / folders in this directory 
+ * 
+ * @param recurse --> Include the files and folders in all the sub-directories 
+ * @param depth --> If set, limit scanning to the specified depth 
+ */
 void CDirectory::List(bool recurse, unsigned depth)
 {
     if (!bIsDirectoryRead)
